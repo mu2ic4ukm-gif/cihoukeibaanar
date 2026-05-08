@@ -1,0 +1,893 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>競馬印 自動集計ツール</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Oswald:wght@400;600;700&family=Noto+Sans+JP:wght@400;500;700&display=swap');
+:root{
+  --bg:#09090e;--bg2:#0f0f18;--sf:#14141f;--sf2:#1c1c2a;
+  --bd:#252535;--bd2:#333348;
+  --gold:#c8a84a;--gold2:#f0d070;
+  --red:#e84040;--grn:#44bb88;--blu:#4488ee;--pur:#aa66ee;
+  --txt:#dcdcf0;--mt:#6868a0;--mt2:#9090c0;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--txt);font-family:'Noto Sans JP',sans-serif;font-size:14px;}
+.hdr{background:linear-gradient(180deg,#141428,#0a0a14);border-bottom:1px solid var(--gold);padding:18px 16px 12px;text-align:center;}
+.hdr h1{font-family:'Oswald',sans-serif;font-size:1.3rem;font-weight:700;color:var(--gold);letter-spacing:.15em;}
+.hdr p{font-size:.68rem;color:var(--mt);margin-top:4px;}
+.inp{padding:12px;background:var(--bg2);border-bottom:1px solid var(--bd);}
+.lbl{font-size:.7rem;color:var(--gold);font-family:'Oswald',sans-serif;letter-spacing:.1em;margin-bottom:6px;display:block;}
+textarea#raw{width:100%;height:110px;background:var(--sf);color:var(--txt);border:1px solid var(--bd2);border-radius:4px;padding:9px 11px;font-size:.68rem;line-height:1.5;resize:vertical;outline:none;}
+textarea#raw:focus{border-color:var(--gold);}
+textarea#raw::placeholder{color:var(--mt);}
+.brow{display:flex;gap:8px;margin-top:8px;}
+.brun{flex:1;padding:11px;background:linear-gradient(135deg,#a07830,#c8a84a);color:#0a0a14;font-family:'Oswald',sans-serif;font-weight:700;font-size:.9rem;letter-spacing:.15em;border:none;border-radius:4px;cursor:pointer;}
+.bclr{padding:11px 16px;background:#222235;color:var(--mt2);font-family:'Oswald',sans-serif;font-weight:600;font-size:.85rem;border:1px solid var(--bd2);border-radius:4px;cursor:pointer;}
+.ri{display:none;padding:8px 14px;background:var(--sf);border-bottom:1px solid var(--bd);font-size:.72rem;color:var(--mt2);}
+.ri strong{color:var(--gold2);font-family:'Oswald',sans-serif;}
+.err{display:none;margin:10px 12px;padding:9px 13px;background:rgba(232,64,64,.1);border:1px solid var(--red);border-radius:4px;font-size:.72rem;color:#ff8888;}
+#res{display:none;}
+.sh{font-family:'Oswald',sans-serif;font-size:.75rem;letter-spacing:.12em;color:var(--gold);padding:12px 14px 6px;border-top:1px solid var(--bd);display:flex;align-items:center;gap:8px;}
+.sh::after{content:'';flex:1;height:1px;background:linear-gradient(to right,var(--bd2),transparent);}
+.tw{overflow-x:auto;padding:0 10px 10px;}
+table{width:100%;border-collapse:collapse;font-size:.68rem;min-width:340px;}
+th{background:#181828;color:var(--gold);padding:6px 5px;text-align:center;border-bottom:2px solid var(--gold);font-family:'Oswald',sans-serif;font-size:.62rem;white-space:nowrap;}
+td{padding:6px 5px;text-align:center;border-bottom:1px solid var(--bd);vertical-align:middle;color:var(--txt);background:var(--sf);white-space:nowrap;}
+.tn{text-align:left;font-weight:700;}
+.tj{text-align:left;font-size:.63rem;color:var(--txt);}
+.mhon{color:#e84040;font-weight:900;font-size:1.1em;}
+.mmru{color:#e88020;font-weight:900;font-size:1.1em;}
+.msan{color:#e8c820;font-weight:900;font-size:1.1em;}
+.mshi{color:#4488ee;font-weight:900;font-size:1.1em;}
+.mstr{color:#aa66ee;font-weight:900;font-size:1.1em;}
+.moni{color:#ff3366;font-weight:900;font-size:1.3em;text-shadow:0 0 3px rgba(255,0,0,0.6);}
+.mnon{color:var(--mt);font-size:.7rem;}
+.cards{padding:0 10px 10px;}
+.card{background:var(--sf);border:1px solid var(--bd);border-radius:6px;margin-bottom:8px;overflow:hidden;}
+.ch{display:flex;align-items:center;gap:8px;padding:9px 12px;border-bottom:1px solid var(--bd);background:rgba(255,255,255,.015);}
+.cmk{font-size:1.2rem;width:24px;text-align:center;flex-shrink:0;}
+.cnum{font-family:'Oswald',sans-serif;font-size:.63rem;background:#222235;color:var(--mt);padding:2px 5px;border-radius:2px;flex-shrink:0;}
+.cnm{font-weight:700;font-size:.85rem;flex:1;}
+.cjk{font-size:.63rem;color:var(--mt2);}
+.cod{font-family:'Oswald',sans-serif;font-size:.85rem;color:#88bbff;flex-shrink:0;}
+.csc{font-family:'Oswald',sans-serif;font-size:.95rem;font-weight:700;color:var(--gold2);flex-shrink:0;}
+.axbar{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--bd);border-top:1px solid var(--bd);}
+.axcl{background:var(--sf);padding:6px 10px;}
+.axlb{font-size:.58rem;color:var(--mt);font-family:'Oswald',sans-serif;margin-bottom:2px;}
+.axvl{font-family:'Oswald',sans-serif;font-size:1.1rem;font-weight:700;}
+.axsub{font-size:.55rem;color:var(--mt);margin-top:1px;}
+.barbg{height:4px;background:#222235;border-radius:2px;margin-top:4px;}
+.barfl{height:4px;border-radius:2px;}
+.mg-l{display:grid;grid-template-columns:repeat(5,1fr);background:#111120;border-top:1px solid var(--bd);}
+.mgl{font-size:.53rem;color:var(--mt);padding:3px 4px;text-align:center;font-family:'Oswald',sans-serif;border-right:1px solid var(--bd);}
+.mgl:last-child{border-right:none;}
+.mg-v{display:grid;grid-template-columns:repeat(5,1fr);border-bottom:1px solid var(--bd);}
+.mgv{padding:5px 3px;text-align:center;border-right:1px solid var(--bd);font-family:'Oswald',sans-serif;font-size:.75rem;}
+.mgv:last-child{border-right:none;}
+.mgv .v{display:block;}
+.mgv .r{display:block;font-size:.53rem;color:var(--mt);margin-top:1px;}
+.vrt{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--bd);border-bottom:1px solid var(--bd);}
+.vc{background:var(--sf);padding:6px 8px;text-align:center;}
+.vclb{font-size:.55rem;color:var(--mt);display:block;margin-bottom:2px;}
+.vcvl{font-family:'Oswald',sans-serif;font-size:.85rem;display:block;}
+.vcsb{font-size:.53rem;color:var(--mt);display:block;margin-top:1px;}
+.ca{padding:7px 12px;font-size:.67rem;color:#9090c0;line-height:1.7;border-top:1px solid var(--bd);}
+.ca .jdg{font-weight:700;color:var(--txt);}
+.baken-box{margin:0 10px 10px;background:var(--sf);border:1px solid var(--bd2);border-radius:6px;overflow:hidden;}
+.baken-hd{background:#111120;padding:8px 12px;font-family:'Oswald',sans-serif;font-size:.75rem;color:var(--gold);letter-spacing:.1em;border-bottom:1px solid var(--bd);}
+.baken-body{padding:10px 12px;}
+.baken-row{display:flex;gap:8px;margin-bottom:8px;align-items:flex-start;}
+.baken-type{font-family:'Oswald',sans-serif;font-size:.65rem;background:var(--sf2);color:var(--gold2);padding:2px 7px;border-radius:3px;flex-shrink:0;white-space:nowrap;margin-top:2px;}
+.baken-horses{color:var(--txt);font-weight:700;font-family:'Oswald',sans-serif;font-size:.82rem;letter-spacing:.03em;}
+.cpsec{margin:0 10px 16px;}
+.cpblk{background:var(--sf);border:1px solid var(--bd2);border-radius:4px;overflow:hidden;}
+.cphd{display:flex;align-items:center;justify-content:space-between;padding:7px 12px;background:#111120;border-bottom:1px solid var(--bd);}
+.cphd span{font-family:'Oswald',sans-serif;font-size:.7rem;color:var(--gold);letter-spacing:.1em;}
+.bcpy{font-family:'Oswald',sans-serif;font-size:.7rem;padding:4px 12px;background:var(--gold);color:#0a0a14;border:none;border-radius:3px;cursor:pointer;font-weight:700;}
+.bcpy.ok{background:var(--grn);}
+#cptxt{padding:11px 13px;font-size:.74rem;color:var(--txt);line-height:1.9;white-space:pre;overflow-x:auto;user-select:all;}
+.logic{margin:0 10px 20px;background:var(--sf);border:1px solid var(--bd);border-radius:4px;padding:10px 12px;font-size:.63rem;color:var(--mt2);line-height:1.8;}
+.logic strong{color:var(--gold);font-family:'Oswald',sans-serif;font-size:.7rem;}
+.emp{text-align:center;padding:40px 20px;color:var(--mt);}
+.emp .ic{font-size:2.5rem;margin-bottom:12px;}
+.emp p{font-size:.74rem;line-height:1.7;}
+</style>
+</head>
+<body>
+<div class="hdr">
+  <h1>🏇 競馬印 自動集計ツール</h1>
+  <p>能力を凌駕する適性至上主義ロジック</p>
+</div>
+<div class="inp">
+  <label class="lbl">▶ レースデータをここに貼り付け</label>
+  <textarea id="raw" placeholder="uma-x.jp のレースページをコピーして貼り付けてください"></textarea>
+  <div class="brow">
+    <button class="brun" onclick="run()">▶ 集計・印を付ける</button>
+    <button class="bclr" onclick="clr()">クリア</button>
+  </div>
+</div>
+<div class="err" id="err"></div>
+<div class="ri" id="ri"></div>
+<div id="res">
+  <div class="sh">印サマリー</div>
+  <div class="tw"><table id="tbl"></table></div>
+  <div class="sh">🎯 馬券戦略アドバイス</div>
+  <div class="baken-box" id="bakenBox" style="display:none;">
+    <div class="baken-body" id="bakenBody"></div>
+  </div>
+  <div class="sh">コピー用</div>
+  <div class="cpsec">
+    <div class="cpblk">
+      <div class="cphd"><span>📋 予想メモ</span><button class="bcpy" id="cpb" onclick="doCp()">コピー</button></div>
+      <div id="cptxt"></div>
+    </div>
+  </div>
+  <div class="sh">スコア詳細（印順）</div>
+  <div class="cards" id="cards"></div>
+  <div class="sh">ロジック説明</div>
+  <div class="logic">
+    <strong>【印の基準 ─ 適性至上主義】</strong><br>
+    👹：オッズ50倍以上 かつ トレンド📈上昇 かつ 変わり身🔄あり かつ 適性±がマイナスではない<br>
+    ◎：適性＞能力 かつ トレンド📈上昇 かつ 変わり身🔄あり<br>
+    　　（※適性±がマイナスの馬は除外）<br>
+    ○：能力・適性ともに高い かつ 変わり身🔄あり<br>
+    ▲：ザ・ド真ん中（能力と適性のバランスが最も良く、平均値に一番近い馬）<br>
+    ⭐：危険な人気馬（能力＞適性 かつ トレンド📉下降。飛べば万々歳の事故枠）<br>
+    △：適性＞能力 かつ トレンド→横ばい<br>
+    　　（※適性±がマイナスの馬、能力だけの馬は妥協で△に入れない）<br><br>
+    <strong>【補正】</strong><br>
+    🌝 叩き2走目：レース慣れを見込み加点<br>
+    🥱 休み明け：公開調教リスクとして減点<br>
+    <strong>【スコア設計】</strong><br>
+    能力スコア：現在指数(S/A/SA/TSA)の全馬相対評価(0〜100)<br>
+    条件適性スコア：距離実績(40%)+脚質適性(25%)+近走トレンド(20%)+条件変化(15%)<br>
+    総合スコア：能力×0.3 ＋ 適性×0.7
+  </div>
+</div>
+<div class="emp" id="emp">
+  <div class="ic">📋</div>
+  <p>uma-x.jp のレースページをコピーして<br>上のテキストエリアに貼り付けてください</p>
+</div>
+
+<script>
+function parse(raw){
+  const lines=raw.split('\n').map(l=>l.trim()).filter(l=>l.length>0);
+  let info={venue:'',round:'',name:'',cond:'',dist:1200,grade:''};
+  for(let i=0;i<Math.min(10,lines.length);i++){
+    if(/^\d+R$/.test(lines[i])){
+      info.venue=lines[i-1]||''; info.round=lines[i];
+      info.name=lines[i+1]||''; info.cond=lines[i+2]||'';
+      const dm=(lines[i+2]||'').match(/(\d{3,4})m/);
+      if(dm) info.dist=parseInt(dm[1]);
+      const gm=(lines[i+2]||'').match(/([A-C][1-4](?:,[A-C][1-4])?|[1-3]勝クラス?|未勝利|オープン|重賞)/);
+      if(gm) info.grade=gm[1];
+      break;
+    }
+  }
+  const horses=[];
+  let i=0;
+  while(i<lines.length){
+    const hm=lines[i].match(/^(\d{1,2})([ァ-ヶー一-龯A-Za-zぁ-んａ-ｚＡ-Ｚ][^\s]{1,})/);
+    if(!hm){i++;continue;}
+    const num=parseInt(hm[1]),name=hm[2];
+    let jk='',odds=0,sV=0,aV=0,saV=0,tsaV=0;
+    if(i+1<lines.length){
+      const jm=lines[i+1].match(/(\d+)?([^\d\s][^\d]*?)\s+([\d.]+)kg\s+(\d+)kg/);
+      if(jm) jk=jm[2].trim();
+    }
+    if(i+2<lines.length){
+      const im=lines[i+2].match(/\[(\d+)\]\s*\(([\d.]+)\)\s*S:([\d.]+)\s*A:([\d.]+)\s*SA:([\d.]+)\s*TSA:([\d.]+)/);
+      if(im){odds=parseFloat(im[2]);sV=parseFloat(im[3]);aV=parseFloat(im[4]);saV=parseFloat(im[5]);tsaV=parseFloat(im[6]);}
+    }
+    const runs=[];
+    let j=i+3;
+    while(j<lines.length){
+      const dl=lines[j];
+      if(dl.match(/^(\d{1,2})([ァ-ヶー一-龯A-Za-zぁ-んａ-ｚＡ-Ｚ][^\s]{1,})/)) break;
+      if(dl.startsWith('(C)')) break;
+      const cols=dl.split(/\t|\s{2,}/).map(s=>s.trim()).filter(s=>s.length>0);
+      if(cols.length>=9&&cols[0].match(/^\d{1,2}$/)&&cols[2]?.match(/^\d:\d{2}\.\d$/)){
+        const place=parseInt(cols[0]);
+        const rawMargin=parseFloat(cols[1])||0;
+        const tp=cols[2].split(':');
+        const runDist=Math.round((parseInt(tp[0])*60+parseFloat(tp[1]||0))*16);
+        const nc=[];
+        for(let k=3;k<cols.length;k++){const n=parseFloat(cols[k]);if(!isNaN(n))nc.push(n);else break;}
+        let rS=0,rA=0,rSA=0,f3=0,f3d=0;
+        if(nc.length>=6){const n=nc.length;rSA=nc[n-1];rA=nc[n-2];rS=nc[n-3];f3d=nc[n-5];f3=nc[n-6];}
+        else if(nc.length>=4){const n=nc.length;rSA=nc[n-1];rA=nc[n-2];rS=nc[n-3];}
+        const textPart=cols.slice(3+nc.length).join(' ');
+        const gradeM=textPart.match(/([A-C][1-4](?:,[A-C][1-4])?|[1-3]勝クラス?|未勝利|オープン|重賞)/);
+        const grade=gradeM?gradeM[1]:'';
+        const dateM=dl.match(/\((\d{2})\/(\d{2})\)/);
+        const month=dateM?parseInt(dateM[1]):0;
+        runs.push({place,margin:rawMargin,f3,f3d,sV:rS,aV:rA,saV:rSA,dist:runDist,grade,month});
+      }
+      j++;
+    }
+    if(odds>0||sV>0){
+      const avg=arr=>{const v=arr.filter(x=>!isNaN(x)&&x>0);return v.length?v.reduce((a,b)=>a+b,0)/v.length:0;};
+      horses.push({
+        num,name,jk,odds,sV,aV,saV,tsaV,runs,
+        avgMargin:avg(runs.map(r=>r.margin)),
+        avgF3:avg(runs.map(r=>r.f3)),
+        avgF3d:avg(runs.map(r=>r.f3d)),
+        maxSV:Math.max(...runs.map(r=>r.sV),0),
+        maxAV:Math.max(...runs.map(r=>r.aV),0),
+        maxSAV:Math.max(...runs.map(r=>r.saV),0),
+      });
+    }
+    i=j;
+  }
+  return{info,horses};
+}
+
+function norm(horses,fn){
+  const vld=horses.filter(h=>{const v=fn(h);return v>0&&!isNaN(v);});
+  const out={};horses.forEach(h=>out[h.num]=0);
+  if(!vld.length)return out;
+  if(vld.length===1){out[vld[0].num]=1;return out;}
+  const vs=vld.map(h=>fn(h));
+  const mn=Math.min(...vs),mx=Math.max(...vs),rng=mx-mn;
+  vld.forEach(h=>out[h.num]=rng>0?(fn(h)-mn)/rng:1);
+  return out;
+}
+
+function dcfg(dist){
+  if(dist<=1400)return{label:'短距離',abK:['sV','saV','aV','tsaV'],apK:['avgF3','avgF3d']};
+  if(dist<=1900)return{label:'マイル・中距離',abK:['saV','tsaV','aV','sV'],apK:['avgMargin','avgF3d']};
+  return{label:'長距離',abK:['aV','saV','tsaV','sV'],apK:['avgF3d','avgMargin','maxSAV']};
+}
+
+function vert(h,tDist,tGrade,tMonth){
+  const runs=h.runs||[];
+  if(!runs.length) return{dSc:0,tSc:0.5,cSc:0,f3dSc:0,upgradeSc:0,freshSc:0,secondSc:0,upgradeInfo:'',freshInfo:'',secondInfo:'',isFresh:false,isSecond:false,info:{same:0,sAvg:'—',oAvg:'—'}};
+  let ws=0,wt=0;
+  runs.forEach(r=>{
+    const diff=r.dist?Math.abs(r.dist-tDist):400;
+    const dw=diff<=200?1.0:diff<=400?0.5:0.1;
+    let sc;
+    if(r.place===1){
+      sc=Math.min(1.0, 0.5+r.margin/2.0);
+    } else if(r.place<=5){
+      sc=Math.max(0, 1.0-r.margin/2.5);
+    } else {
+      sc=r.margin<=0.8?Math.max(0,1.0-r.margin/2.5):Math.max(0,0.3-r.margin/5.0);
+    }
+    ws+=sc*dw; wt+=dw;
+  });
+  const dSc=wt>0?ws/wt:0;
+
+  let tSc=0.5;
+  const rec=runs.slice(0,Math.min(5,runs.length));
+  if(rec.length>=2){
+    let ts=0,tw=0;
+    for(let k=0;k<rec.length-1;k++){
+      const rk=rec[k], rk1=rec[k+1];
+      const eff=r=>r.place===1?-r.margin:r.margin;
+      const nw=eff(rk), ol=eff(rk1);
+      if(isNaN(nw)||isNaN(ol))continue;
+      const w=rec.length-k;
+      ts+=(ol-nw)*w; tw+=w;
+    }
+    if(tw>0)tSc=Math.min(1,Math.max(0,0.5+(ts/tw)/4.0));
+  }
+
+  const same=runs.filter(r=>r.dist&&Math.abs(r.dist-tDist)<=200);
+  const other=runs.filter(r=>!r.dist||Math.abs(r.dist-tDist)>200);
+  const effMargin=r=>r.place===1?-r.margin:r.margin;
+  const smMs=same.map(effMargin).filter(m=>!isNaN(m));
+  const otMs=other.map(effMargin).filter(m=>!isNaN(m));
+  const smAvg=smMs.length?smMs.reduce((a,b)=>a+b,0)/smMs.length:1;
+  const otAvg=otMs.length?otMs.reduce((a,b)=>a+b,0)/otMs.length:1;
+  let cSc=0;
+  if(same.length===0&&other.length>0) cSc=Math.max(0,0.8-Math.max(0,otAvg)/4);
+  else if(same.length>0){
+    let fit=smAvg<otAvg?0.7:0.3;
+    if(same.length>=2){
+      const eff0=effMargin(same[0]), effL=effMargin(same[same.length-1]);
+      if(eff0<effL) fit+=0.2;
+    }
+    cSc=Math.min(1,Math.max(0,fit));
+  }
+
+  const f3dSc=1/(1+Math.max(0,h.avgF3d));
+
+  const GRADE_ORD={'C4':1,'C3':2,'C2':3,'C1':4,'B3':5,'B2':6,'B1':7,'A3':8,'A2':9,'A1':10,'オープン':11,'重賞':12,'1勝':3,'2勝':6,'3勝':9,'未勝利':1};
+  let upgradeSc=0,upgradeInfo='';
+  if(runs.length>=1){
+    const prev=runs[0];
+    const curOrd=GRADE_ORD[tGrade]||0;
+    const prvOrd=GRADE_ORD[prev.grade]||0;
+    if(curOrd>prvOrd&&prvOrd>0&&curOrd>0){
+      if(prev.place===1){
+        upgradeSc=0;
+        upgradeInfo=`昇級(${prev.grade}→${tGrade}) 前走1着→昇級`;
+      } else {
+        upgradeSc=-0.3;
+        upgradeInfo=`昇級(${prev.grade}→${tGrade}) 前走${prev.place}着→減点`;
+      }
+    }
+  }
+
+  let freshSc=0,secondSc=0,freshInfo='',secondInfo='',isFresh=false,isSecond=false;
+  if(runs.length>=1&&runs[0].month>0){
+    let mDiff=tMonth-runs[0].month; if(mDiff<0)mDiff+=12;
+    if(mDiff>=3){
+      freshSc=-0.2; 
+      freshInfo=`休み明け(${mDiff}ヶ月) → 減点`;
+      isFresh=true;
+    } else if(mDiff>=1&&runs.length>=2&&runs[1].month>0){
+      let mDiff2=runs[0].month-runs[1].month; if(mDiff2<0)mDiff2+=12;
+      if(mDiff2>=3){
+        secondSc=0.2; 
+        secondInfo=`叩き2戦目(レース慣れ) → 加点`;
+        isSecond=true;
+      }
+    }
+  }
+
+  return{dSc,tSc,cSc,f3dSc,upgradeSc,freshSc,secondSc,upgradeInfo,freshInfo,secondInfo,isFresh,isSecond,
+    info:{same:same.length,sAvg:smMs.length?(smMs.reduce((a,b)=>a+b,0)/smMs.length).toFixed(2):'—',oAvg:otMs.length?(otMs.reduce((a,b)=>a+b,0)/otMs.length).toFixed(2):'—'}};
+}
+
+function score(horses,dist,grade,month){
+  const cfg=dcfg(dist||1200);
+
+  const REL={
+    sV:norm(horses,h=>h.sV), aV:norm(horses,h=>h.aV),
+    saV:norm(horses,h=>h.saV), tsaV:norm(horses,h=>h.tsaV),
+    avgMargin:norm(horses,h=>h.avgMargin>0?1/h.avgMargin:0),
+    avgF3:norm(horses,h=>h.avgF3>0?1/h.avgF3:0),
+    avgF3d:norm(horses,h=>h.avgF3d>0?1/h.avgF3d:0),
+    maxSV:norm(horses,h=>h.maxSV), maxAV:norm(horses,h=>h.maxAV), maxSAV:norm(horses,h=>h.maxSAV),
+  };
+
+  const abRaw={};
+  horses.forEach(h=>{const vs=cfg.abK.map(k=>REL[k][h.num]||0);abRaw[h.num]=vs.reduce((a,b)=>a+b,0)/vs.length;});
+  const abVs=Object.values(abRaw);
+  const abMn=Math.min(...abVs),abMx=Math.max(...abVs),abRng=abMx-abMn;
+  const abScore={};
+  horses.forEach(h=>abScore[h.num]=abRng>0?Math.round((abRaw[h.num]-abMn)/abRng*100):50);
+
+  const V={};horses.forEach(h=>V[h.num]=vert(h,dist||1200,grade||'',month||0));
+  const vn=key=>{
+    const m={};horses.forEach(h=>m[h.num]=V[h.num][key]||0);
+    const vs=Object.values(m);
+    const mn=Math.min(...vs),mx=Math.max(...vs),rng=mx-mn;
+    const o={};horses.forEach(h=>o[h.num]=rng>0?(m[h.num]-mn)/rng:0.5);
+    return o;
+  };
+  const nD=vn('dSc'),nT=vn('tSc'),nC=vn('cSc');
+  const nF3d=vn('f3dSc');
+
+  const apRaw={};
+  horses.forEach(h=>{const vs=cfg.apK.map(k=>REL[k][h.num]||0);apRaw[h.num]=vs.reduce((a,b)=>a+b,0)/vs.length;});
+  const nAp=norm(horses,h=>apRaw[h.num]);
+
+  const apScore1={};
+  horses.forEach(h=>{
+    const base=nD[h.num]*0.40+nAp[h.num]*0.25+nT[h.num]*0.20+nC[h.num]*0.15;
+    const adj=(V[h.num].upgradeSc+V[h.num].freshSc+V[h.num].secondSc)*0.3; // 加減点反映
+    apScore1[h.num]=Math.max(0,Math.min(1,base+adj));
+  });
+  const apVs=Object.values(apScore1);
+  const apMn=Math.min(...apVs),apMx=Math.max(...apVs),apRng=apMx-apMn;
+  const apNorm={};
+  horses.forEach(h=>apNorm[h.num]=apRng>0?(apScore1[h.num]-apMn)/apRng:0.5);
+
+  const redCount=horses.filter(h=>h.odds>0&&h.odds<=10).length;
+  const isSendan=redCount>=4;
+
+  const apAvg=horses.reduce((s,h)=>s+apNorm[h.num],0)/horses.length;
+  const abAvg=horses.reduce((s,h)=>s+abScore[h.num],0)/horses.length;
+  const apDev_coeff=isSendan?80:70;
+
+  const totScore={};
+  horses.forEach(h=>{
+    const ab=abScore[h.num];
+    const apDev=(apNorm[h.num]-apAvg);
+    const apAdj=Math.round(apDev*apDev_coeff);
+    totScore[h.num]=Math.round(ab*0.3)+apAdj+50;
+  });
+
+  const MKEYS=['sV','aV','saV','tsaV','avgMargin','avgF3','avgF3d','maxSV','maxAV','maxSAV'];
+  const RAW_FNS={sV:h=>h.sV, aV:h=>h.aV, saV:h=>h.saV, tsaV:h=>h.tsaV, avgMargin:h=>h.avgMargin, avgF3:h=>h.avgF3, avgF3d:h=>h.avgF3d, maxSV:h=>h.maxSV, maxAV:h=>h.maxAV, maxSAV:h=>h.maxSAV};
+  const rnks={};horses.forEach(h=>{rnks[h.num]={};});
+  
+  MKEYS.forEach(k=>{
+    const hasData = h => RAW_FNS[k](h) > 0;
+    const validHorses = [...horses].filter(hasData);
+    validHorses.sort((a,b)=>(REL[k][b.num]||0)-(REL[k][a.num]||0));
+    validHorses.forEach((h,i)=>rnks[h.num][k]=i+1);
+    horses.filter(h=>!hasData(h)).forEach(h=>rnks[h.num][k]=99);
+  });
+
+  const byTot=[...horses].sort((a,b)=>totScore[b.num]-totScore[a.num]);
+  const byAb=[...horses].sort((a,b)=>abScore[b.num]-abScore[a.num]);
+  const byAp=[...horses].sort((a,b)=>apNorm[b.num]-apNorm[a.num]);
+
+  const n=horses.length;
+  const deltaMax=n<=9?0:n<=12?2:n<=15?3:4;
+
+  const tScSorted=[...horses].sort((a,b)=>(V[b.num].tSc||0)-(V[a.num].tSc||0));
+  const cScSorted=[...horses].sort((a,b)=>(V[b.num].cSc||0)-(V[a.num].cSc||0));
+
+  const tTop30idx=Math.max(0,Math.ceil(n*0.3)-1);
+  const tBot30idx=Math.floor(n*0.7);
+  const tThresUp  = V[tScSorted[tTop30idx].num].tSc||0;
+  const tThresDown= V[tScSorted[tBot30idx].num].tSc||0;
+
+  const cTop40idx=Math.max(0,Math.ceil(n*0.4)-1);
+  const cThresHenmi= V[cScSorted[cTop40idx].num].cSc||0;
+
+  const abBot33idx=Math.floor(n*0.67);
+  const abThresLow= abScore[byAb[abBot33idx]?.num]||abAvg;
+
+  const apTop33idx=Math.max(0,Math.ceil(n/3)-1);
+  const apThresHigh= apNorm[byAp[apTop33idx].num];
+
+  const flags={};
+  horses.forEach(h=>{
+    const ab  =abScore[h.num];
+    const ap  =Math.round(apNorm[h.num]*100);
+    const tSc =V[h.num].tSc||0;
+    const cSc =V[h.num].cSc||0;
+
+    const apGtAb    =ap>ab;
+    const abGtAp    =ab>ap;
+    const isUpTrend =tSc>=tThresUp;
+    const isDownTrend=tSc<=tThresDown;
+    const isFlat    =!isUpTrend&&!isDownTrend;
+    const hasHenmi  =cSc>=cThresHenmi;
+    const isLowAb   =ab<=abThresLow;
+    const isHighAp  =apNorm[h.num]>=apThresHigh;
+    const isHihi    =isLowAb&&isHighAp;
+    const isFresh   =V[h.num].isFresh;
+    const isSecond  =V[h.num].isSecond;
+    const isKeshi   =abGtAp && isDownTrend;
+
+    flags[h.num]={apGtAb,abGtAp,isUpTrend,isFlat,isDownTrend,hasHenmi,isLowAb,isHighAp,isHihi,isFresh,isSecond,isKeshi,ab,ap,tSc,cSc};
+  });
+
+  const MK={};horses.forEach(h=>MK[h.num]='');
+  const used=new Set();
+
+  const apAvgVal=apAvg;
+
+  // 1. 【最優先】👹：オッズ50倍以上 ＋ 📈 ＋ 🔄 ＋ 適性±がマイナスではない
+  for(const h of byTot){
+    const f=flags[h.num];
+    if(h.odds >= 50.0 && f.isUpTrend && f.hasHenmi && apNorm[h.num] >= apAvgVal){
+      MK[h.num]='👹'; used.add(h.num);
+    }
+  }
+
+  // 2. ⭐：危険な人気馬（能力＞適性 ＋ トレンド📉）
+  let starHorse=null;
+  for(const h of byAb){
+    if(used.has(h.num)) continue;
+    const f=flags[h.num];
+    if(f.abGtAp && f.isDownTrend){
+      MK[h.num]='⭐'; starHorse=h; used.add(h.num); break;
+    }
+  }
+
+  // 3. ◎候補を収集
+  const honCandidates=[];
+  for(const h of byTot){
+    if(used.has(h.num)) continue;
+    const f=flags[h.num];
+    // 【厳格な足切り】適性がマイナス（平均未満）の馬は◎にしない
+    if(apNorm[h.num] < apAvgVal) continue;
+
+    if(f.apGtAb&&f.isUpTrend&&f.hasHenmi)  honCandidates.push({h,pri:0});
+    else if(f.isHihi&&f.hasHenmi)           honCandidates.push({h,pri:1});
+    else if(f.apGtAb&&f.isUpTrend)          honCandidates.push({h,pri:2});
+    else if(f.apGtAb&&f.hasHenmi)           honCandidates.push({h,pri:3});
+    else if(f.apGtAb)                       honCandidates.push({h,pri:4});
+  }
+  honCandidates.sort((a,b)=>a.pri-b.pri||b.h.totSc-a.h.totSc);
+
+  if(honCandidates.length>0){
+    MK[honCandidates[0].h.num]='◎'; used.add(honCandidates[0].h.num);
+  }
+
+  // 4. ○: 能力・適性ともに全馬平均以上 かつ 🔄
+  for(const h of byTot){
+    if(used.has(h.num)) continue;
+    const f=flags[h.num];
+    if(f.ab>=abAvg&&apNorm[h.num]>=apAvgVal&&f.hasHenmi){
+      MK[h.num]='○'; used.add(h.num); break;
+    }
+  }
+  if(![...used].some(num=>MK[num]==='○')){
+    for(const h of byTot){
+      if(used.has(h.num)) continue;
+      const f=flags[h.num];
+      if(f.ab>=abAvg&&apNorm[h.num]>=apAvgVal){
+        MK[h.num]='○'; used.add(h.num); break;
+      }
+    }
+  }
+
+  // 5. ▲: ザ・ド真ん中（能力と適性のバランスが最も良く、平均値に一番近い馬）
+  let centerHorse=null;
+  let minDiff=999;
+  for(const h of horses){
+    if(used.has(h.num)) continue;
+    const f=flags[h.num];
+    const diff = Math.abs(f.ab - 50) + Math.abs(f.ap - 50) + Math.abs(f.ab - f.ap)*0.5;
+    if(diff < minDiff){
+      minDiff = diff;
+      centerHorse = h;
+    }
+  }
+  if(centerHorse){
+    MK[centerHorse.num]='▲'; used.add(centerHorse.num);
+  }
+
+  // 6. △: 適性＞能力 かつ →横ばい
+  let dCnt=0;
+  for(const h of byTot){
+    if(used.has(h.num)) continue;
+    if(dCnt>=deltaMax) break;
+    const f=flags[h.num];
+    // 【厳格な足切り】適性がマイナスの馬は△にも入れない
+    if(apNorm[h.num] < apAvgVal) continue;
+    
+    if(f.apGtAb&&f.isFlat){MK[h.num]='△'; used.add(h.num); dCnt++;}
+  }
+
+  const ORD={'👹':0,'◎':1,'○':2,'▲':3,'⭐':4,'△':5,'':6};
+
+  return horses.map(h=>({
+    ...h,
+    abSc:abScore[h.num],
+    apSc:Math.round(apNorm[h.num]*100),
+    apAdj:Math.round((apNorm[h.num]-apAvg)*apDev_coeff),
+    totSc:totScore[h.num],
+    dSc:Math.round((V[h.num].dSc||0)*100),
+    tSc:Math.round((V[h.num].tSc||0)*100),
+    cSc:Math.round((V[h.num].cSc||0)*100),
+    vInfo:V[h.num].info,
+    upgradeInfo:V[h.num].upgradeInfo||'',
+    freshInfo:V[h.num].freshInfo||'',
+    secondInfo:V[h.num].secondInfo||'',
+    upgradeSc:V[h.num].upgradeSc||0,
+    freshSc:V[h.num].freshSc||0,
+    secondSc:V[h.num].secondSc||0,
+    flags:flags[h.num],
+    rel:Object.fromEntries(MKEYS.map(k=>[k,Math.round((REL[k][h.num]||0)*100)])),
+    rnks:rnks[h.num],
+    mark:MK[h.num],
+    isSendan,
+    oRank:byTot.findIndex(s=>s.num===h.num)+1,
+    mkOrd:ORD[MK[h.num]??''],
+    cfg,
+  }));
+}
+
+// ============================================================
+// RENDER
+// ============================================================
+const MKC={'◎':'mhon','○':'mmru','▲':'msan','△':'mshi','⭐':'mstr','👹':'moni'};
+function cc(s){if(s>=90)return'#ff5555';if(s>=70)return'var(--gold2)';if(s>=50)return'#55bb88';return'#555580';}
+
+function mkDisp(mark){
+  if(!mark)return'<span class="mnon">—</span>';
+  return `<span class="${MKC[mark]||''}">${mark}</span>`;
+}
+
+function sortByMark(scored){
+  const ORD={'👹':0,'◎':1,'○':2,'▲':3,'⭐':4,'△':5,'':6};
+  return [...scored].sort((a,b)=>{
+    const od=ORD[a.mark??'']-ORD[b.mark??''];
+    return od!==0?od:b.totSc-a.totSc;
+  });
+}
+
+function flagStr(h){
+  const f=h.flags||{};
+  let s='';
+  if(f.isHihi)     s+='🔥 ';
+  if(f.hasHenmi)   s+='🔄 ';
+  if(f.isUpTrend)  s+='📈 ';
+  if(f.isDownTrend)s+='📉 ';
+  if(f.isFlat)     s+='→ ';
+  if(f.isFresh)    s+='🥱休み明け ';
+  if(f.isSecond)   s+='🌝叩き2戦目 ';
+  return s.trim();
+}
+
+function renderTable(scored){
+  const sorted=sortByMark(scored);
+  const cfg=scored[0]?.cfg||{abK:[],apK:[]};
+  let h=`<thead><tr>
+    <th>印</th><th>馬番</th><th>馬名</th><th>騎手</th><th>オッズ</th>
+    <th>総合</th><th>能力</th><th>適性±</th><th>適性</th>
+    <th>フラグ</th>
+    <th>S値</th><th>A値</th><th>SA値</th><th>TSA値</th>
+    <th>着差avg</th><th>3Favg</th><th>3F差avg</th><th>S最高</th><th>A最高</th><th>SA最高</th>
+  </tr></thead><tbody>`;
+  const RKEYS=['sV','aV','saV','tsaV','avgMargin','avgF3','avgF3d','maxSV','maxAV','maxSAV'];
+  sorted.forEach(h2=>{
+    const adj=h2.apAdj;
+    const adjStr=adj>=0?`<span style="color:#55ee99;font-family:'Oswald',sans-serif;">+${adj}</span>`:`<span style="color:#ff6666;font-family:'Oswald',sans-serif;">${adj}</span>`;
+    const cells=RKEYS.map(k=>{
+      const s=h2.rel[k],r=h2.rnks[k];
+      const bd=cfg.abK.includes(k)?'border-left:2px solid var(--gold);':cfg.apK.includes(k)?'border-left:2px solid #5599ee;':'';
+      if(r===99)return`<td style="${bd}"><span style="color:#555580">—</span></td>`;
+      return`<td style="${bd}"><span style="color:${cc(s)};font-family:'Oswald',sans-serif;">${s}</span></td>`;
+    }).join('');
+    const fs=flagStr(h2);
+    h+=`<tr>
+      <td>${mkDisp(h2.mark)}</td>
+      <td><b>${h2.num}</b></td>
+      <td class="tn">${h2.name}</td>
+      <td class="tj">${h2.jk}</td>
+      <td style="font-family:'Oswald',sans-serif;color:#88bbff;">${h2.odds}</td>
+      <td style="font-family:'Oswald',sans-serif;font-weight:700;color:var(--gold2);font-size:.88rem;">${h2.totSc}</td>
+      <td style="font-family:'Oswald',sans-serif;color:${h2.abSc>=50?'var(--gold2)':'#88ccff'};">${h2.abSc}</td>
+      <td>${adjStr}</td>
+      <td style="font-family:'Oswald',sans-serif;color:${h2.apSc>=50?'#55ee99':'#88aacc'};">${h2.apSc}</td>
+      <td style="font-size:.6rem;color:var(--mt2);">${fs}</td>
+      ${cells}
+    </tr>`;
+  });
+  return h+'</tbody>';
+}
+
+function renderCards(scored){
+  const sorted=sortByMark(scored);
+  const LABELS=['S値(現)','A値(現)','SA値(現)','TSA値','着差avg','3Favg','3F差avg','S値max','A値max','SA値max'];
+  const KEYS=['sV','aV','saV','tsaV','avgMargin','avgF3','avgF3d','maxSV','maxAV','maxSAV'];
+  const RAW=[h=>h.sV,h=>h.aV,h=>h.saV,h=>h.tsaV,
+    h=>h.avgMargin>0?h.avgMargin.toFixed(2):'—',
+    h=>h.avgF3>0?h.avgF3.toFixed(1):'—',
+    h=>h.avgF3d>0?h.avgF3d.toFixed(2):'—',
+    h=>h.maxSV||'—',h=>h.maxAV||'—',h=>h.maxSAV||'—'];
+
+  return sorted.map(h=>{
+    const mc=MKC[h.mark]||'';
+    const adj=h.apAdj;
+    const adjStr=adj>=0?`+${adj}`:`${adj}`;
+    const adjCol=adj>=0?'#55ee99':'#ff6666';
+    const f=h.flags||{};
+    const ab=h.abSc,ap=h.apSc;
+
+    let jdg='';
+    if(h.mark==='👹')                            jdg='👹 激熱：オッズ50倍以上＋📈上昇＋🔄変わり身';
+    else if(h.mark==='⭐')                        jdg='⭐ 危険な人気馬：能力＞適性＋📉下降 (来たら事故)';
+    else if(h.mark==='▲')                        jdg='▲ ザ・真ん中：能力・適性のバランス◎';
+    else if(f.apGtAb&&f.isUpTrend&&f.hasHenmi) jdg='✅ 適性＞能力＋📈上昇＋🔄変わり身（◎候補）';
+    else if(f.isHihi&&f.hasHenmi)               jdg='🔥✅ 能力低いが適性突出＋🔄変わり身（◎候補）';
+    else if(f.ab>=50&&f.ap>=50&&f.hasHenmi)     jdg='✅ 能力・適性ともに高い＋🔄変わり身（○候補）';
+    else if(f.apGtAb&&f.isFlat)                 jdg='→ 適性＞能力＋横ばい（△候補）';
+    else if(f.ab>=50&&f.ap>=50)                  jdg='→ 能力・適性ともに高い（紐候補）';
+    else if(f.apGtAb)                            jdg='→ 適性＞能力（紐候補）';
+    else                                         jdg='→ 能力＞適性（評価下げ）';
+    if(f.isUpTrend&&!jdg.includes('📈')) jdg+=' 📈';
+    if(f.hasHenmi&&!jdg.includes('🔄'))  jdg+=' 🔄';
+
+    const lbls=LABELS.map(l=>`<div class="mgl">${l}</div>`).join('');
+    const cfg=h.cfg||{abK:[],apK:[]};
+    const vals=KEYS.map((k,i)=>{
+      const s=h.rel[k],r=h.rnks[k];
+      const rv=RAW[i](h);
+      const bd=cfg.abK.includes(k)?'border-left:2px solid var(--gold);':cfg.apK.includes(k)?'border-left:2px solid #5599ee;':'';
+      if(r===99||rv==='—')return`<div class="mgv" style="${bd}"><span class="v" style="color:#555580">—</span><span class="r">—</span></div>`;
+      return`<div class="mgv" style="${bd}"><span class="v" style="color:${cc(s)}">${rv}</span><span class="r">${s}</span></div>`;
+    }).join('');
+
+    return`<div class="card">
+      <div class="ch">
+        <div class="cmk ${mc}">${h.mark||'—'}</div>
+        <div class="cnum">馬番${h.num}</div>
+        <div class="cnm">${h.name}</div>
+        <div class="cjk">${h.jk}</div>
+        <div class="cod">${h.odds}倍</div>
+        <div class="csc">${h.totSc}</div>
+      </div>
+      <div class="axbar">
+        <div class="axcl">
+          <div class="axlb">能力スコア</div>
+          <div class="axvl" style="color:${ab>=50?'var(--gold2)':'#88ccff'}">${ab}</div>
+          <div class="axsub">現在指数ベース</div>
+          <div class="barbg"><div class="barfl" style="width:${ab}%;background:${ab>=50?'var(--gold)':'#4488ee'}"></div></div>
+        </div>
+        <div class="axcl">
+          <div class="axlb">適性スコア <span style="color:${adjCol};font-family:'Oswald',sans-serif;">${adjStr}</span></div>
+          <div class="axvl" style="color:${ap>=50?'#55ee99':'#88aacc'}">${ap}</div>
+          <div class="axsub">縦比較→横比較</div>
+          <div class="barbg"><div class="barfl" style="width:${ap}%;background:${ap>=50?'#44bb88':'#446688'}"></div></div>
+        </div>
+      </div>
+      <div class="mg-l">${lbls}</div>
+      <div class="mg-v">${vals}</div>
+      <div class="vrt">
+        <div class="vc">
+          <span class="vclb">距離実績</span>
+          <span class="vcvl" style="color:${h.dSc>=70?'var(--gold2)':h.dSc>=40?'#55bb88':'#555580'}">${h.dSc}</span>
+          <span class="vcsb">同距離${h.vInfo.same}走 avg${h.vInfo.sAvg}秒</span>
+        </div>
+        <div class="vc">
+          <span class="vclb">近走トレンド</span>
+          <span class="vcvl" style="color:${h.tSc>=70?'#55ee99':h.tSc<=30?'#ff5555':'var(--mt2)'}">${h.tSc}</span>
+          <span class="vcsb">${h.tSc>=60?'📈上昇':h.tSc<=40?'📉下降':'→横ばい'}</span>
+        </div>
+        <div class="vc">
+          <span class="vclb">条件変化</span>
+          <span class="vcvl" style="color:${h.cSc>=70?'var(--gold2)':h.cSc>=40?'#55bb88':'#555580'}">${h.cSc}</span>
+          <span class="vcsb">${h.cSc>=50?'🔄変わり身':'—'}</span>
+        </div>
+      </div>
+      <div class="ca">
+        <span class="jdg">${jdg}</span><br>
+        総合:${h.totSc}（能力${ab} 適性${ap} 補正${adjStr}）<br>
+        着差avg:${h.avgMargin>0?h.avgMargin.toFixed(2)+'秒':'—'} 3F差avg:${h.avgF3d>0?h.avgF3d.toFixed(2)+'秒':'—'} ｜同距離${h.vInfo.same}走(avg${h.vInfo.sAvg}秒) 他距離avg${h.vInfo.oAvg}秒
+        ${h.upgradeInfo?`<br><span style="color:${h.upgradeSc<0?'#ff6666':'#ffcc44'}">🔼 ${h.upgradeInfo}</span>`:''}${h.freshInfo?`<br><span style="color:${h.freshSc<0?'#ff6666':'#55ee99'}">🥱 ${h.freshInfo}</span>`:''}${h.secondInfo?`<br><span style="color:${h.secondSc>0?'#55ee99':'#ffcc44'}">🌝 ${h.secondInfo}</span>`:''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderBaken(scored,ri){
+  const oni  =scored.filter(h=>h.mark==='👹');
+  const hon  =scored.find(h=>h.mark==='◎');
+  const maru =scored.find(h=>h.mark==='○');
+  const san  =scored.find(h=>h.mark==='▲');
+  const star =scored.find(h=>h.mark==='⭐');
+  const deltas=scored.filter(h=>h.mark==='△').sort((a,b)=>b.totSc-a.totSc);
+  const box=document.getElementById('bakenBox');
+  const body=document.getElementById('bakenBody');
+  
+  const allMark=[...oni,hon,maru,san,star,...deltas].filter(Boolean);
+  const uniqueMarks = Array.from(new Set(allMark));
+
+  if(uniqueMarks.length === 0){
+    box.style.display='none';
+    return;
+  }
+
+  const n=h=>h.num+'番';
+  const ns=arr=>arr.filter(Boolean).map(n).join(', ');
+
+  let rows=[];
+  const o=hon?.odds||0;
+
+  if(oni.length > 0){
+    rows.push({type:'大穴 👹',label:'👹印からの単複・ワイド',horses:ns(oni)});
+  }
+
+  const can3 = uniqueMarks.length >= 3;
+
+  if(hon){
+    rows.push({type:'単複',label:'◎単勝・複勝',horses:n(hon)});
+
+    if(can3){
+      let sec = [maru, san, star].filter(Boolean);
+      if(o < 5) sec = [maru, san].filter(Boolean);
+      
+      if(sec.length > 0){
+        const label = o < 5 ? '硬い軸 ◎→○▲→全印' : '◎→○▲⭐→全印';
+        rows.push({
+          type: '三連単 F',
+          label: label,
+          horses: `${n(hon)} → ${ns(sec)} → ${ns(uniqueMarks)}`
+        });
+      }
+    }
+
+    let boxHorses = [hon, maru, san, ...deltas.slice(0,1)].filter(Boolean);
+    if(boxHorses.length < 3 && oni.length > 0) boxHorses.push(...oni);
+    boxHorses = Array.from(new Set(boxHorses));
+    
+    if(boxHorses.length < 3){
+      boxHorses.push(...deltas);
+      boxHorses = Array.from(new Set(boxHorses));
+    }
+
+    if(boxHorses.length >= 3){
+      rows.push({
+        type: '三連複 BOX',
+        label: '◎○▲＋△上位 (不足時は👹等追加)',
+        horses: ns(boxHorses)
+      });
+    } else if(boxHorses.length === 2){
+      rows.push({
+        type: '馬連/ワイド',
+        label: '◎から相手へ',
+        horses: ns(boxHorses)
+      });
+    }
+  }
+
+  if(star){
+    rows.push({type:'⭐ 注意',label:'危険な実力馬 (来たら事故・飛べば万々歳)',horses:n(star)});
+  } else if(oni.length === 0){
+    rows.push({type:'⭐/👹 なし',label:'このレースに大穴・妙味馬は不在',horses:''});
+  }
+
+  body.innerHTML=rows.map(r=>`
+    <div class="baken-row">
+      <span class="baken-type">${r.type}</span>
+      <div>
+        <div style="font-size:.63rem;color:var(--mt2);margin-bottom:2px;">${r.label}</div>
+        ${r.horses?`<div class="baken-horses">${r.horses}</div>`:''}
+      </div>
+    </div>`).join('');
+  box.style.display='block';
+}
+
+function run(){
+  const raw=document.getElementById('raw').value.trim();
+  const errEl=document.getElementById('err');
+  const resEl=document.getElementById('res');
+  const empEl=document.getElementById('emp');
+  const riEl=document.getElementById('ri');
+  errEl.style.display='none';resEl.style.display='none';
+  empEl.style.display='none';riEl.style.display='none';
+  if(!raw){errEl.textContent='データが入力されていません。';errEl.style.display='block';empEl.style.display='block';return;}
+  let parsed;
+  try{parsed=parse(raw);}catch(e){errEl.textContent='パースエラー: '+e.message;errEl.style.display='block';return;}
+  if(!parsed.horses.length){errEl.textContent='馬データが見つかりませんでした。';errEl.style.display='block';return;}
+  const riMonth=new Date().getMonth()+1;
+  const scored=score(parsed.horses,parsed.info.dist,parsed.info.grade,riMonth);
+  const ri=parsed.info;
+  const dl=ri.dist<=1400?'短距離':ri.dist<=1900?'マイル・中距離':'長距離';
+  const isSendan=scored[0]?.isSendan||false;
+  const flagTxt=isSendan?'　<span style="color:#ff8844;font-weight:700;">🔴 混戦</span>':'';
+  riEl.innerHTML=`<strong>${ri.venue} ${ri.round} ${ri.name}</strong>　${ri.cond}　${parsed.horses.length}頭　<span style="color:var(--gold2);font-weight:700;">${dl}(${ri.dist}m)</span>${flagTxt}`;
+  riEl.style.display='block';
+  document.getElementById('tbl').innerHTML=renderTable(scored);
+  renderBaken(scored,ri);
+  document.getElementById('cards').innerHTML=renderCards(scored);
+  const sorted=sortByMark(scored);
+  const marked=sorted.filter(h=>h.mark);
+  let lines=[`${ri.venue} ${ri.round} ${ri.name}`,''];
+  marked.forEach(h=>{
+    lines.push(`${h.mark}  ${h.num}番 ${h.name}  ${h.jk}  ${h.odds}倍`);
+  });
+  const bakenBody=document.getElementById('bakenBody');
+  if(bakenBody&&bakenBody.innerText.trim()){
+    lines.push('');lines.push('【馬券アドバイス】');
+    bakenBody.querySelectorAll('.baken-row').forEach(row=>{
+      const type=row.querySelector('.baken-type')?.textContent||'';
+      const horses=row.querySelector('.baken-horses')?.textContent||'';
+      const label=row.querySelector('div > div')?.textContent||'';
+      if(horses)lines.push(`${type}: ${horses}`);
+      else if(label)lines.push(`${type}: ${label}`);
+    });
+  }
+  document.getElementById('cptxt').textContent=lines.join('\n');
+  resEl.style.display='block';
+  resEl.scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+function clr(){
+  document.getElementById('raw').value='';
+  ['res','ri','err','bakenBox'].forEach(id=>document.getElementById(id).style.display='none');
+  document.getElementById('emp').style.display='block';
+  document.getElementById('raw').focus();
+}
+
+function doCp(){
+  const t=document.getElementById('cptxt').textContent;
+  navigator.clipboard.writeText(t).then(()=>{
+    const b=document.getElementById('cpb');
+    b.textContent='✓ 完了';b.classList.add('ok');
+    setTimeout(()=>{b.textContent='コピー';b.classList.remove('ok');},2000);
+  }).catch(()=>{
+    const e=document.getElementById('cptxt');
+    const r=document.createRange();r.selectNodeContents(e);
+    const s=window.getSelection();s.removeAllRanges();s.addRange(r);
+  });
+}
+</script>
+
+</body>
+</html>
